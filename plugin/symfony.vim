@@ -32,6 +32,7 @@ endfunction
 function! SetModuleConfig()
   let g:sf_module            = g:sf_app_modules . g:sf_module_name .'/'
   let g:sf_module_actions    = g:sf_module . 'actions/actions.class.php'
+  let g:sf_module_components = g:sf_module . 'actions/components.class.php'
   let g:sf_module_templates  = g:sf_module . 'templates/'
   let g:sf_module_config     = g:sf_module . 'config/'
   let g:sf_module_lib        = g:sf_module . 'lib/'
@@ -76,13 +77,23 @@ endfunction
 
 " indexSuccess.php => index
 function! GetActionNameFromActionFileName(action_file_name)
-  return matchstr(a:action_file_name, '\zs\U*\ze\u.*')
+  return matchstr(a:action_file_name, '\zs\U*\ze\u.*Success')
+endfunction
+
+" _index.php => index
+function! GetComponentNameFromComponentFileName(component_file_name)
+  return matchstr(a:component_file_name, '_\zs.*\ze\.')
 endfunction
 
 
 " index => indexSuccess.php
 function! GetSuccessTemplateFromAction(action_name)
   return GetActionNameFromAction(a:action_name)."Success.php"
+endfunction
+
+" index => _index.php
+function! GetSuccessTemplateFromComponent(component_name)
+  return "_".GetActionNameFromAction(a:component_name.".php")
 endfunction
 
 " index => executeIndex
@@ -98,6 +109,35 @@ function! ImAmInAModule()
   endif
 endfunction
 
+function! ImAmInAnAction() 
+  if (matchstr(expand('%:p'), 'apps\%[\\\/].\{-}\%[\\\/]modules\%[\\\/].\{-}\%[\\\/]actions\%[\\\/]actions.class.php') != '')
+    return 1
+  else 
+    return ''
+  endif
+endfunction
+
+function! ImAmInAComponent() 
+  if (matchstr(expand('%:p'), 'apps\%[\\\/].\{-}\%[\\\/]modules\%[\\\/].\{-}\%[\\\/]actions\%[\\\/]components.class.php') != '')
+    return 1
+  else 
+    return ''
+  endif
+endfunction
+
+function! ImAmInAComponentTemplate()
+  if (matchstr(expand('%:p'), 'apps\%[\\\/].\{-}\%[\\\/]modules\%[\\\/].\{-}\%[\\\/]templates\%[\\\/]_.\{-}.php') != '')
+    return 1
+  else 
+    return ''
+  endif
+endfunction
+  
+function! ImAmInAnActionTemplate()
+endif
+
+endfunction
+
 function! g:EchoError(msg)
     echohl errormsg
     echo a:msg
@@ -107,20 +147,31 @@ endfunction
 " switch from the template file to the corresponding function code of the action 
 " and from the action to the corresponding template
 function! Switch()
+  
   if exists("g:sf_root_dir") 
+    
     if (ImAmInAModule())
 
       if (FindCurrentAction() != '') 
+
         " we are in an action file so let's go the success template file
 
         let g:last_action_line = getpos('.')
         
-        if (g:last_template_line != [])
-          "exec 'edit +' . g:last_template_line . ' ' . g:sf_module_templates.GetSuccessTemplateFromAction(FindCurrentAction())
-          exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromAction(FindCurrentAction())
-          call cursor(g:last_template_line[1], g:last_template_line[2], 0)
-        else
-          exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromAction(FindCurrentAction())
+        if (ImAmInAnAction())
+          if (g:last_template_line != [])
+            exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromAction(FindCurrentAction())
+            call cursor(g:last_template_line[1], g:last_template_line[2], 0)
+          else
+            exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromAction(FindCurrentAction())
+          endif
+        elseif (ImAmInAComponent())
+          if (g:last_template_line != [])
+            exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromComponent(FindCurrentAction())
+            call cursor(g:last_template_line[1], g:last_template_line[2], 0)
+          else
+            exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromComponent(FindCurrentAction())
+          endif
         endif
 
         let g:last_template_line = []
@@ -130,19 +181,29 @@ function! Switch()
         
         let g:last_template_line = getpos('.')
 
-        if (g:last_action_line != [])
-          "exec 'edit +' . g:last_action_line . ' ' . g:sf_module_actions 
-          exec 'edit ' . g:sf_module_actions 
-          call cursor(g:last_action_line[1], g:last_action_line[2], 0)
+        if (ImAmInAComponentTemplate())
+          if (g:last_action_line != [])
+            exec 'edit ' . g:sf_module_components
+            call cursor(g:last_action_line[1], g:last_action_line[2], 0)
+          else
+            exec 'edit +/' . GetExecuteActionNameFromAction(GetComponentNameFromComponentFileName(FindCurrentFileName())) .  ' ' . g:sf_module_components
+          endif
         else
-          exec 'edit +/' . GetExecuteActionNameFromAction(GetActionNameFromActionFileName(FindCurrentFileName())) .  ' ' . g:sf_module_actions 
+          if (g:last_action_line != [])
+            exec 'edit ' . g:sf_module_actions 
+            call cursor(g:last_action_line[1], g:last_action_line[2], 0)
+          else
+            exec 'edit +/' . GetExecuteActionNameFromAction(GetActionNameFromActionFileName(FindCurrentFileName())) .  ' ' . g:sf_module_actions 
+          endif
         endif
+        
 
         let g:last_action_line = []
 
         " jump to the last line of the function
         "call cursor(search('}')-1, 100, 0)
       endif
+
     else 
       call g:EchoError("Not in a symfony module context, unable to switch view")
       return 0
@@ -162,7 +223,7 @@ command! -n=? -complete=dir SfSwitchView :call Switch()
 
 autocmd! bufEnter *.php call ReconfigPaths()
 
-"let g:sf_root_dir      = "c:/xampp/www/project/"
+"let g:sf_root_dir      = "<your_path_to_your_sf_root_dir>/"
 let g:sf_app_name      = ""
 let g:sf_module_name   = "" 
 
