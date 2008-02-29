@@ -1,12 +1,14 @@
 " vim IDE for the symfony PHP framework. Provides easy browsing between symfony modules. 
-" Last Change:  24 jan 2008
+" Last Change:  29 feb 2008
 " Maintainer:   Nicolas MARTIN <email.de.nicolas.martin at gmail dot com>
 
 function! ReconfigPaths()
   let file = expand('%')
   "if ( matchstr(file, '^apps') != '' )
-    let  g:sf_app_name = substitute(file, '.*apps\\\(.\{-}\)\\.*', '\1', 'g')
-    let  g:sf_module_name = substitute(file, '.*modules\\\(.\{-}\)\\.*', '\1', 'g')
+    "let  g:sf_app_name = substitute(file, '.*apps\(/\|\\\)\(.\{-}\)\\.*', '\1', 'g')
+    "let  g:sf_module_name = substitute(file, '.*modules\(/\|\\\)\(.\{-}\)\\.*', '\1', 'g')
+    let g:sf_app_name = substitute(file, '.*apps\(/\|\\\)\(.\{-\}\)\(/\|\\\).*', '\2', 'g')
+    let g:sf_module_name = substitute(file, '.*modules\(/\|\\\)\(.\{-\}\)\(/\|\\\).*', '\2', 'g')
   "endif
 
   call SetAppConfig()
@@ -102,7 +104,7 @@ function! GetExecuteActionNameFromAction(action_name)
 endfunction
 
 function! ImAmInAModule() 
-  if (matchstr(expand('%:p'), 'apps\%[\\\/].\{-}\%[\\\/]modules\%[\\\/].\{-}\%[\\\/]') != '')
+  if (matchstr(expand('%:p'), 'apps\(/\|\\\).\{-}\(/\|\\\)modules\(/\|\\\).\{-}\(/\|\\\)') != '')
     return 1
   else 
     return ''
@@ -110,7 +112,7 @@ function! ImAmInAModule()
 endfunction
 
 function! ImAmInAnAction() 
-  if (matchstr(expand('%:p'), 'apps\%[\\\/].\{-}\%[\\\/]modules\%[\\\/].\{-}\%[\\\/]actions\%[\\\/]actions.class.php') != '')
+  if (matchstr(expand('%:p'), 'apps\(/\|\\\).\{-}\(/\|\\\)modules\(/\|\\\).\{-}\(/\|\\\)actions\(/\|\\\)actions.class.php') != '')
     return 1
   else 
     return ''
@@ -118,7 +120,7 @@ function! ImAmInAnAction()
 endfunction
 
 function! ImAmInAComponent() 
-  if (matchstr(expand('%:p'), 'apps\%[\\\/].\{-}\%[\\\/]modules\%[\\\/].\{-}\%[\\\/]actions\%[\\\/]components.class.php') != '')
+  if (matchstr(expand('%:p'), 'apps\(/\|\\\).\{-}\(/\|\\\)modules\(/\|\\\).\{-}\(/\|\\\)actions\(/\|\\\)components.class.php') != '')
     return 1
   else 
     return ''
@@ -126,7 +128,7 @@ function! ImAmInAComponent()
 endfunction
 
 function! ImAmInAComponentTemplate()
-  if (matchstr(expand('%:p'), 'apps\%[\\\/].\{-}\%[\\\/]modules\%[\\\/].\{-}\%[\\\/]templates\%[\\\/]_.\{-}.php') != '')
+  if (matchstr(expand('%:p'), 'apps\(/\|\\\).\{-}\(/\|\\\)modules\(/\|\\\).\{-}\(/\|\\\)templates\(/\|\\\)_.\{-}.php') != '')
     return 1
   else 
     return ''
@@ -216,8 +218,7 @@ endfunction
 
 
 """"""""""""""""""""""""""""
-
-"silent map <F8> :SfSwitchView <CR>
+" map <F8> :SfSwitchView <CR>
 
 command! -n=? -complete=dir SfSwitchView :call Switch()
 
