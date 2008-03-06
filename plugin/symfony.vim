@@ -1,9 +1,9 @@
 " vim IDE for the symfony PHP framework. Provides easy browsing between symfony modules. 
-" Last Change:  29 feb 2008
+" Last Change:  06.03 2008
 " Maintainer:   Nicolas MARTIN <email.de.nicolas.martin at gmail dot com>
 
 function! ReconfigPaths()
-  let file = expand('%')
+  let file = expand('%:p')
   "if ( matchstr(file, '^apps') != '' )
     "let  g:sf_app_name = substitute(file, '.*apps\(/\|\\\)\(.\{-}\)\\.*', '\1', 'g')
     "let  g:sf_module_name = substitute(file, '.*modules\(/\|\\\)\(.\{-}\)\\.*', '\1', 'g')
@@ -11,8 +11,10 @@ function! ReconfigPaths()
     let g:sf_module_name = substitute(file, '.*modules\(/\|\\\)\(.\{-\}\)\(/\|\\\).*', '\2', 'g')
   "endif
 
+  if (exists("g:sf_root_dir"))
   call SetAppConfig()
   call SetModuleConfig()
+  endif
 endfunction
 
 function! SetProjectConfig()
@@ -211,7 +213,7 @@ function! Switch()
       return 0
     endif
   else
-      call g:EchoError("Symfony project root dir not defined. Please set the g:sf_root_dir variable")
+      call g:EchoError("Symfony project root dir not defined. Please run SfPluginLoad('<your_sf_root_dir>')")
   endif
 
 endfunction
@@ -221,22 +223,33 @@ endfunction
 " map <F8> :SfSwitchView <CR>
 
 command! -n=? -complete=dir SfSwitchView :call Switch()
+command! -nargs=1 -complete=dir SfPluginLoad :call SfPluginLoad(<args>)
 
 autocmd! bufEnter *.php call ReconfigPaths()
 
-"let g:sf_root_dir      = "<your_path_to_your_sf_root_dir>/"
+"let g:sf_root_dir      = '<your_path_to_your_sf_root_dir>/'
 let g:sf_app_name      = ""
 let g:sf_module_name   = "" 
 
 let g:last_template_line = []
 let g:last_action_line = []
 
-if exists("g:sf_root_dir")
-  :call SetProjectConfig()
-  :call SetAppConfig()
-  :call SetModuleConfig()
-  exec(':cd '.g:sf_root_dir)
-endif
+"autocmd! bufRead,bufNew,bufEnter * call SfPluginLoad(getcwd())  " Automatically reload .vimrc when changing
+
+function! SfPluginLoad(path)
+  if ( finddir('apps', a:path) != '') && (finddir('config', a:path) != '') && (finddir('lib', a:path) != '') && (finddir('web', a:path) != '')
+    let g:sf_root_dir = a:path.'/'
+    exec(':cd '.g:sf_root_dir)
+    call ReconfigPaths()
+  endif
+
+  if exists("g:sf_root_dir")
+    :call SetProjectConfig()
+    :call SetAppConfig()
+    :call SetModuleConfig()
+  endif
+endfunction
+
 
 "autocmd! bufwritepost symfony.vim source %
 
