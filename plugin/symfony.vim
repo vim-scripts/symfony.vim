@@ -1,5 +1,5 @@
 " vim IDE for the symfony PHP framework. Provides easy browsing between symfony modules. 
-" Last Change:  06.03 2008
+" Last Change:  14.04 2008
 " Maintainer:   Nicolas MARTIN <email.de.nicolas.martin at gmail dot com>
 
 function! ReconfigPaths()
@@ -152,68 +152,67 @@ endfunction
 " and from the action to the corresponding template
 function! Switch()
   
-  if exists("g:sf_root_dir") 
+  if (!exists("g:sf_root_dir"))
+    call SfPluginLoad(getcwd())
+  endif
     
-    if (ImAmInAModule())
+  if (ImAmInAModule())
 
-      if (FindCurrentAction() != '') 
+    if (FindCurrentAction() != '') 
 
-        " we are in an action file so let's go the success template file
+      " we are in an action file so let's go the success template file
 
-        let g:last_action_line = getpos('.')
-        
-        if (ImAmInAnAction())
-          if (g:last_template_line != [])
-            exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromAction(FindCurrentAction())
-            call cursor(g:last_template_line[1], g:last_template_line[2], 0)
-          else
-            exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromAction(FindCurrentAction())
-          endif
-        elseif (ImAmInAComponent())
-          if (g:last_template_line != [])
-            exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromComponent(FindCurrentAction())
-            call cursor(g:last_template_line[1], g:last_template_line[2], 0)
-          else
-            exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromComponent(FindCurrentAction())
-          endif
-        endif
-
-        let g:last_template_line = []
-
-      else
-        " we are in a template  so let's go the current module action/function
-        
-        let g:last_template_line = getpos('.')
-
-        if (ImAmInAComponentTemplate())
-          if (g:last_action_line != [])
-            exec 'edit ' . g:sf_module_components
-            call cursor(g:last_action_line[1], g:last_action_line[2], 0)
-          else
-            exec 'edit +/' . GetExecuteActionNameFromAction(GetComponentNameFromComponentFileName(FindCurrentFileName())) .  ' ' . g:sf_module_components
-          endif
+      let g:last_action_line = getpos('.')
+      
+      if (ImAmInAnAction())
+        if (g:last_template_line != [])
+          exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromAction(FindCurrentAction())
+          call cursor(g:last_template_line[1], g:last_template_line[2], 0)
         else
-          if (g:last_action_line != [])
-            exec 'edit ' . g:sf_module_actions 
-            call cursor(g:last_action_line[1], g:last_action_line[2], 0)
-          else
-            exec 'edit +/' . GetExecuteActionNameFromAction(GetActionNameFromActionFileName(FindCurrentFileName())) .  ' ' . g:sf_module_actions 
-          endif
+          exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromAction(FindCurrentAction())
         endif
-        
-
-        let g:last_action_line = []
-
-        " jump to the last line of the function
-        "call cursor(search('}')-1, 100, 0)
+      elseif (ImAmInAComponent())
+        if (g:last_template_line != [])
+          exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromComponent(FindCurrentAction())
+          call cursor(g:last_template_line[1], g:last_template_line[2], 0)
+        else
+          exec 'edit ' . g:sf_module_templates.GetSuccessTemplateFromComponent(FindCurrentAction())
+        endif
       endif
 
-    else 
-      call g:EchoError("Not in a symfony module context, unable to switch view")
-      return 0
+      let g:last_template_line = []
+
+    else
+      " we are in a template  so let's go the current module action/function
+      
+      let g:last_template_line = getpos('.')
+
+      if (ImAmInAComponentTemplate())
+        if (g:last_action_line != [])
+          exec 'edit ' . g:sf_module_components
+          call cursor(g:last_action_line[1], g:last_action_line[2], 0)
+        else
+          exec 'edit +/' . GetExecuteActionNameFromAction(GetComponentNameFromComponentFileName(FindCurrentFileName())) .  ' ' . g:sf_module_components
+        endif
+      else
+        if (g:last_action_line != [])
+          exec 'edit ' . g:sf_module_actions 
+          call cursor(g:last_action_line[1], g:last_action_line[2], 0)
+        else
+          exec 'edit +/' . GetExecuteActionNameFromAction(GetActionNameFromActionFileName(FindCurrentFileName())) .  ' ' . g:sf_module_actions 
+        endif
+      endif
+      
+
+      let g:last_action_line = []
+
+      " jump to the last line of the function
+      "call cursor(search('}')-1, 100, 0)
     endif
-  else
-      call g:EchoError("Symfony project root dir not defined. Please run SfPluginLoad('<your_sf_root_dir>')")
+
+  else 
+    call g:EchoError("Not in a symfony module context, unable to switch view")
+    return 0
   endif
 
 endfunction
@@ -225,16 +224,14 @@ endfunction
 command! -n=? -complete=dir SfSwitchView :call Switch()
 command! -nargs=1 -complete=dir SfPluginLoad :call SfPluginLoad(<args>)
 
-autocmd! bufEnter *.php call ReconfigPaths()
 
-"let g:sf_root_dir      = '<your_path_to_your_sf_root_dir>/'
 let g:sf_app_name      = ""
 let g:sf_module_name   = "" 
 
 let g:last_template_line = []
 let g:last_action_line = []
 
-"autocmd! bufRead,bufNew,bufEnter * call SfPluginLoad(getcwd())  " Automatically reload .vimrc when changing
+verbose autocmd BufEnter,BufLeave,BufWipeout * call SfPluginLoad(getcwd())  " Automatically reload .vimrc when changing
 
 function! SfPluginLoad(path)
   if ( finddir('apps', a:path) != '') && (finddir('config', a:path) != '') && (finddir('lib', a:path) != '') && (finddir('web', a:path) != '')
@@ -249,13 +246,3 @@ function! SfPluginLoad(path)
     :call SetModuleConfig()
   endif
 endfunction
-
-
-"autocmd! bufwritepost symfony.vim source %
-
-"noremap <F12> :set makeprg=firefox.exe\ http://localhost/%:t<CR> :make <CR>
-"noremap <S-F12> :set makeprg=safari.exe\ http://localhost/%:t<CR> :make <CR>
-
-"amenu Symfony.template\ view :<CR>
-"amenu Symfony.-Sep- :
-"switch to template view / action view
