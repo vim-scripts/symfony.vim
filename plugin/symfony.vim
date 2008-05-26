@@ -1,5 +1,5 @@
 " vim IDE for the symfony PHP framework. Provides easy browsing between symfony modules. 
-" Last Change:  14.04 2008
+" Last Change:  26.05 2008
 " Maintainer:   Nicolas MARTIN <email.de.nicolas.martin at gmail dot com>
 
 function! ReconfigPaths()
@@ -231,10 +231,10 @@ let g:sf_module_name   = ""
 let g:last_template_line = []
 let g:last_action_line = []
 
-verbose autocmd BufEnter,BufLeave,BufWipeout * call SfPluginLoad(getcwd())  " Automatically reload .vimrc when changing
+autocmd BufEnter,BufLeave,BufWipeout * call SfPluginLoad(getcwd())  " Automatically reload .vimrc when changing
 
 function! SfPluginLoad(path)
-  if ( finddir('apps', a:path) != '') && (finddir('config', a:path) != '') && (finddir('lib', a:path) != '') && (finddir('web', a:path) != '')
+  if ( finddir('apps', a:path) != '') "&& (finddir('config', a:path) != '') && (finddir('lib', a:path) != '') && (finddir('web', a:path) != '')
     let g:sf_root_dir = a:path.'/'
     exec(':cd '.g:sf_root_dir)
     call ReconfigPaths()
