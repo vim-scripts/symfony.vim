@@ -1,5 +1,5 @@
 " vim IDE for the symfony PHP framework. Provides easy browsing between symfony modules. 
-" Last Change:  26.05 2008
+" Last Change:  28.05 2008
 " Maintainer:   Nicolas MARTIN <email.de.nicolas.martin at gmail dot com>
 
 function! ReconfigPaths()
@@ -45,8 +45,8 @@ endfunction
 " find the corresponding template file of the current function surrounding the cursor
 function! FindCurrentAction()
   call cursor(line('.')+1, 0, 0)
-  let lineno               = search('public function\ \(.*\)()', 'nbe')
-  let action               = matchstr(getline(lineno), '\zsexecute\(.*\)\ze()')
+  let lineno               = search('public function\ \(.*\)(.*)', 'nbe')
+  let action               = matchstr(getline(lineno), '\zsexecute\(.*\)\ze(.*)')
   call cursor(line('.')-1, 0, 0)
   if (action != '')
     "let template_file_name   = tolower(action)."Success.php"
